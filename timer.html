@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>IGCSE Exam Timer</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding: 30px;
+      background: #f4f4f9;
+      color: #333;
+      max-width: 600px;
+      margin: auto;
+    }
+
+    h1 {
+      color: #0056b3;
+    }
+
+    input[type="number"], button {
+      padding: 10px;
+      font-size: 1rem;
+      margin-top: 10px;
+      width: 100%;
+      box-sizing: border-box;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    button {
+      background-color: #007bff;
+      color: white;
+      cursor: pointer;
+      border: none;
+      margin-top: 20px;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    button:disabled {
+      background-color: #999;
+      cursor: not-allowed;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    #timeDisplay {
+      font-size: 3rem;
+      margin-top: 30px;
+      text-align: center;
+    }
+
+    label {
+      display: block;
+      margin: 10px 0 5px;
+    }
+
+    .alert-options {
+      margin-top: 10px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .alert-options label {
+      margin-left: 5px;
+    }
+
+    .alert-item {
+      display: flex;
+      align-items: center;
+    }
+  </style>
+</head>
+<body>
+  <h1>Exam Timer</h1>
+  <p>Welcome to the IGCSE Timer! Simulate real exam conditions by using this tool.</p>
+
+  <ol>
+    <li>Enter your exam duration in minutes</li>
+    <li>Select when you'd like to be alerted</li>
+    <li>Click <strong>Start</strong> to begin the countdown</li>
+  </ol>
+
+  <label for="timeInput">Enter time (in minutes):</label>
+  <input type="number" id="timeInput" min="1" placeholder="e.g. 90">
+
+  <div class="alert-options">
+    <span><strong>Choose alert times:</strong></span>
+    <div class="alert-item">
+      <input type="checkbox" id="alert30" value="30">
+      <label for="alert30">30 minutes left</label>
+    </div>
+    <div class="alert-item">
+      <input type="checkbox" id="alert5" value="5">
+      <label for="alert5">5 minutes left</label>
+    </div>
+    <div class="alert-item">
+      <input type="checkbox" id="alert2" value="2">
+      <label for="alert2">2 minutes left</label>
+    </div>
+  </div>
+
+  <div class="btn-group">
+    <button id="startBtn" onclick="startTimer()">Start</button>
+    <button id="stopBtn" onclick="stopTimer()">Stop</button>
+    <button id="resetBtn" onclick="resetTimer()">Reset</button>
+  </div>
+
+  <div id="timeDisplay">00:00</div>
+
+  <script>
+    let timerInterval;
+    let secondsLeft = 0;
+    let isRunning = false;
+
+    function speak(text) {
+      const msg = new SpeechSynthesisUtterance(text);
+      speechSynthesis.speak(msg);
+    }
+
+    function getSelectedAlerts() {
+      const alerts = [];
+      if (document.getElementById("alert30").checked) alerts.push(30);
+      if (document.getElementById("alert5").checked) alerts.push(5);
+      if (document.getElementById("alert2").checked) alerts.push(2);
+      return alerts.map(min => min * 60);
+    }
+
+    function updateDisplay() {
+      const mins = Math.floor(secondsLeft / 60);
+      const secs = secondsLeft % 60;
+      document.getElementById("timeDisplay").textContent =
+        `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    function startTimer() {
+      if (isRunning) return;
+
+      const inputMinutes = parseInt(document.getElementById("timeInput").value);
+      if (isNaN(inputMinutes) || inputMinutes <= 0) {
+        alert("Please enter a valid number of minutes.");
+        return;
+      }
+
+      if (secondsLeft <= 0) {
+        secondsLeft = inputMinutes * 60;
+      }
+
+      const selectedAlerts = getSelectedAlerts();
+      isRunning = true;
+      speak("Candidates, you may start now");
+
+      timerInterval = setInterval(() => {
+        updateDisplay();
+
+        if (selectedAlerts.includes(secondsLeft)) {
+          const alertMin = Math.floor(secondsLeft / 60);
+          speak(`Candidates, ${alertMin} minute${alertMin > 1 ? "s" : ""} left`);
+        }
+
+        if (secondsLeft === 0) {
+          speak("Candidates, time is up please close your papers to the cover page and remain seated");
+          clearInterval(timerInterval); 
+          isRunning = false;
+        }
+
+        secondsLeft--;
+      }, 1000);
+
+      document.getElementById("startBtn").disabled = true;
+    }
+
+    function stopTimer() {
+      clearInterval(timerInterval);
+      isRunning = false;
+      document.getElementById("startBtn").disabled = false;
+    }
+
+    function resetTimer() {
+      clearInterval(timerInterval);
+      isRunning = false;
+      secondsLeft = 0;
+      document.getElementById("timeDisplay").textContent = "00:00";
+      document.getElementById("timeInput").value = '';
+      document.getElementById("alert30").checked = false;
+      document.getElementById("alert5").checked = false;
+      document.getElementById("alert2").checked = false;
+      document.getElementById("startBtn").disabled = false;
+    }
+  </script>
+</body>
+</html>
